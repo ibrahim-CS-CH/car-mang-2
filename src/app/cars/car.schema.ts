@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 const carSchema = z.object({
-  carModel: z.string().min(3, "required"),
+  model: z.string().min(3, "required"),
   price: z.number().min(3, "required"),
   color: z.enum(["Blue", "White", "Black", "Red"], {
     errorMap: () => ({ message: "Please select a valid color" }),

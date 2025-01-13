@@ -27,7 +27,7 @@ export default function DrawerMenu() {
         <DrawerContent className="">
           <MenuItem
             to={appRoutes.car.root}
-            title="users"
+            title="Cars"
             icon={<Car />}
             onClick={() => setOpen(false)}
           />

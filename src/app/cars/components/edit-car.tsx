@@ -1,170 +1,115 @@
+import { Dispatch, SetStateAction } from "react";
+import { useForm } from "react-hook-form";
+
+import { RHFDateTimePicker } from "@/components/react-hook-form/rhf-date-time-picker";
+import { RHFLabeledInput } from "@/components/react-hook-form/rhf-labeled-input";
+import RHFSelect from "@/components/react-hook-form/rhf-select";
+import { Button } from "@/components/ui/button";
 import {
-  Button,
-  CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-} from "@mui/material";
-import dayjs from "dayjs";
-import { Controller, useForm } from "react-hook-form";
+} from "@/components/ui/dialog";
+import { carResolver, CarSchemaType } from "../car.schema";
+import { useCars } from "@/lib/hooks/use-cars";
 import { toast } from "sonner";
 
-import CustomCard from "@/components/CustomCard";
-import CustomTextField from "@/components/CustomTextFieldX";
-import MuiXDatePicker from "@/components/MuiXDatePicker";
-import MySelect from "@/components/MySelect";
-import Spacing from "@/components/Spacing";
-import { useUpdateCar } from "@/lib/react-query/car-query";
-import { carResolver, CarSchemaType } from "../car.schema";
-
-type EditCarProps = {
+export function EditCar({
+  open,
+  setOpen,
+  car,
+}: {
   open: boolean;
-  car?: Car;
-  onClose: () => void;
-  refetch: any;
-};
-
-export default function EditCar({ open, car, onClose, refetch }: EditCarProps) {
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  car: Car;
+}) {
+  const { updateCar, updateLoading } = useCars();
   const {
-    control,
-    formState: { errors, isValid },
+    register,
+    formState: { errors, isDirty },
     handleSubmit,
   } = useForm<CarSchemaType>({
     mode: "onChange",
     resolver: carResolver,
     values: car
       ? {
-          carModel: car.carModel,
           color: car.color,
-          manufactureDate: car.manufactureDate,
           price: car.price,
+          model: car.model,
+          manufactureDate: car.manufactureDate,
         }
       : undefined,
   });
 
-  const { mutate: updateCar, isPending } = useUpdateCar();
-
   const onSubmit = async (data: CarSchemaType) => {
-    if (car) {
-      try {
-        updateCar(
-          {
-            id: car.id,
-            ...data,
-          },
-          {
-            onSuccess: () => {
-              console.log("Car updated ");
-              toast.success("Car updated successfully!");
-              onClose();
-              refetch();
-            },
-            onError: () => {
-              toast.error("Oops !");
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error submitting car data:", error);
+    if (data) {
+      const update = await updateCar(car.id, data);
+      if (update === "success") {
+        toast.success("Updated successfuly!");
+        setOpen(!open);
+      } else {
+        toast.error("Oops!. Error");
       }
     }
   };
-
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Edit Car {car && car.carModel}</DialogTitle>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CustomCard sx={{ width: "full" }}>
-            <Spacing>
-              <CustomTextField
-                controllerProps={{
-                  control: control as any,
-                  name: "carModel",
-                }}
-                textFieldProps={{
-                  label: "carModel",
-                  disabled: isPending,
-                }}
-              />
-              <CustomTextField
-                controllerProps={{
-                  control: control as any,
-                  name: "price",
-                }}
-                textFieldProps={{
-                  label: "price",
-                  type: "number",
-                  disabled: isPending,
-                }}
-              />
-            </Spacing>
-            <Spacing>
-              <MySelect
-                defaultValue={car?.color}
-                label="Color"
-                items={[
-                  { id: "White", value: "White" },
-                  { id: "Black", value: "Black" },
-                  { id: "Red", value: "Red" },
-                  { id: "Blue", value: "Blue" },
-                ]}
-                controllerProps={{
-                  control,
-                  name: "color",
-                  disabled: isPending,
-                }}
-              />
-              <Controller
-                name="manufactureDate"
-                control={control}
-                render={({ field }) => (
-                  <MuiXDatePicker
-                    {...field}
-                    views={["year"]}
-                    maxDate={dayjs().add(2, "year")}
-                    value={field.value ? dayjs(field.value) : null}
-                    onChange={(newValue) =>
-                      field.onChange(
-                        newValue ? dayjs(newValue).format("YYYY") : ""
-                      )
-                    }
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!errors.manufactureDate,
-                        helperText: errors.manufactureDate?.message,
-                      },
-                    }}
-                    disabled={isPending}
-                  />
-                )}
-              />
-            </Spacing>
-          </CustomCard>
-          <DialogActions>
-            <Button
-              onClick={onClose}
-              color="secondary"
-              sx={{
-                mt: 2,
-              }}>
-              Cancel
-            </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle className="">Edit Car "{car.model}"</DialogTitle>
+          <DialogDescription>
+            Make changes to your car here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <RHFLabeledInput
+              {...register("model")}
+              label="Car model"
+              placeholder="Car model"
+              error={errors.model?.message}
+            />
+            <RHFLabeledInput
+              {...register("price", {
+                setValueAs: (value) => (value ? +value : undefined),
+              })}
+              label="Price"
+              placeholder="Price"
+              error={errors.price?.message}
+              type="number"
+            />
+          </div>
 
-            <Button
-              sx={{
-                mt: 2,
-              }}
-              type="submit"
-              disabled={isPending || !isValid}
-              color="primary"
-              variant="contained"
-              startIcon={isPending && <CircularProgress size={14} />}>
-              Save
+          <div className="flex flex-col sm:flex-row gap-4">
+            <RHFSelect
+              data={[
+                { label: "White", value: "White" },
+                { label: "Black", value: "Black" },
+                { label: "Red", value: "Red" },
+                { label: "Blue", value: "Blue" },
+              ]}
+              placeholder="Color"
+              registration={{ ...register("color") }}
+              error={errors.color?.message}
+              defaultValue={car?.color}
+            />
+
+            <RHFDateTimePicker
+              {...register("manufactureDate")}
+              error={errors.manufactureDate?.message}
+              placeholder="Manufacture date"
+              triggerClassName="text-xs h-7"
+              defaultValue={car?.manufactureDate}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={!isDirty || updateLoading}>
+              Save changes
             </Button>
-          </DialogActions>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

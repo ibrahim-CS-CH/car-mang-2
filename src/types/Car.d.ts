@@ -2,5 +2,6 @@ interface Car {
   id: string;
   model: string;
   price: number;
-  manufactoreDate: string;
+  manufactureDate: string;
+  color: "Blue" | "White" | "Black" | "Red";
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import { format, getHours, getMinutes } from "date-fns";
 import DatePickerProvider from "headless-react-datepicker";
 import { CalendarIcon } from "lucide-react";
