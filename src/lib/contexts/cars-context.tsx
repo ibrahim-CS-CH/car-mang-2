@@ -169,9 +169,6 @@ export const CarProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
-  const [deleteStatus, setDeleteStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
 
   const getCarsFromLocalStorage = (): Car[] => {
     const storedCars = localStorage.getItem(LOCAL_STORAGE_KEY);
